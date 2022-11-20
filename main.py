@@ -1,3 +1,4 @@
+import os
 import sys
 
 from PyQt6.QtWidgets import QApplication
@@ -7,7 +8,11 @@ from gui.main_window.main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
-    window = MainWindow()
+    if getattr(sys, 'frozen', False):
+        app_path = os.path.dirname(sys.executable)
+    else:
+        app_path = os.path.dirname(os.path.abspath(__file__))
+    window = MainWindow(app_path)
     app.exec()
 
 

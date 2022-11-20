@@ -1,5 +1,6 @@
 import os
 import pickle
+import sys
 
 from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtGui import QAction, QFont, QIcon
@@ -20,12 +21,13 @@ from outlook.outlook import Outlook
 
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, app_path):
         super().__init__()
+        self.app_path = app_path
         # Main Window Configuration
         self.setFixedSize(1000, 680)
         self.setWindowTitle('Nvidia Weekly Report')
-        self.setWindowIcon(QIcon('gui/resources/Images/logo.png'))
+        self.setWindowIcon(QIcon(os.path.join(self.app_path, 'Images\\logo.png')))
         # Top Frame ( Title and Buttons )
         #   Frame Configuration
         self.top_frame = QFrame(self)
@@ -127,14 +129,14 @@ class MainWindow(QMainWindow):
         if self.sections:
             username = os.getlogin().replace(' ', '_')
             save_dict = self.get_sections_info()
-            with open(f'gui/resources/saved_files/{username}.pcl', 'wb') as f:
+            with open(os.path.join(self.app_path, f"saved_files\\{username}.pcl"), 'wb') as f:
                 pickle.dump(save_dict, f)
 
     def load_content(self):
         self.remove_all_sections()
         username = os.getlogin().replace(' ', '_')
         try:
-            with open(f'gui/resources/saved_files/{username}.pcl', 'rb') as f:
+            with open(os.path.join(self.app_path, f"saved_files\\{username}.pcl"), 'rb') as f:
                 load_content = pickle.load(f)
         except Exception:
             return
