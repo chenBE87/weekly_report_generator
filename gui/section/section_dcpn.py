@@ -1,25 +1,19 @@
-from PyQt6.QtGui import QIntValidator
-from PyQt6.QtWidgets import QLineEdit, QComboBox
 
 import Globals
-from gui.section.section import Section
+from gui.section.section_redmine import SectionRedmine
 
 
-class SectionDcpn(Section):
+class SectionDcpn(SectionRedmine):
 
     link_prefix = 'https://techpartnerhub.vmware.com/support/my-cases/'
 
     def add_content(self):
-        task_edit = QLineEdit()
-        task_edit.setPlaceholderText('Enter RM ticket...')
-        task_edit.setValidator(QIntValidator())
-        status = QComboBox()
-        status.addItems(Globals.dcpn_status_items)
-        comments_edit = QLineEdit()
-        comments_edit.setPlaceholderText('Enter your comment here...')
-        self.content_lay.addWidget(task_edit, self.content_current_row, 0)
-        self.content_lay.addWidget(status, self.content_current_row, 1)
-        self.content_lay.addWidget(comments_edit, self.content_current_row, 2)
-        self.content_current_row += 1
+        super().add_content()
+        self.content_list[-1][0].setPlaceholderText('Enter DCPN ticket...')
+        self.content_list[-1][1].clear()
+        self.content_list[-1][1].addItems(Globals.dcpn_status_items)
+
+    def _set_status_description(self, row, status: str):
+        self.content_list[row][1].setCurrentIndex(Globals.dcpn_status_items.index(status))
 
 

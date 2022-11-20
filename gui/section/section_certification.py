@@ -46,4 +46,63 @@ class SectionCertification(Section):
         self.content_lay.addWidget(comments_edit, len(self.content_list), 6)
         self.content_list.append([component, lbl, task_edit, boxes_frame, nics, status, comments_edit])
 
+    def set_line(self, line_num: int, content_dict: dict):
+        while len(self.content_list) < line_num:
+            self.add_content()
+        self._set_component(line_num, content_dict['Component'])
+        self._set_task(line_num, content_dict['Task'])
+        self._set_box_checks(line_num, content_dict['Types'])
+        self._set_nic(line_num, content_dict['Nic'])
+        self._set_percentage(line_num, int(content_dict['Status']))
+        self._set_comment(line_num, content_dict['Comment'])
 
+    def get_line_info(self, line_num):
+        content = {'Component': self.get_component(line_num),
+                   'Task': self.get_task(line_num),
+                   'Types': self.get_box_checks(line_num),
+                   'Nic': self.get_nic(line_num),
+                   'Status': self.get_percentage(line_num),
+                   'Comment': self.get_comment(line_num)}
+        return content
+
+    def _set_component(self, row: int, component: str):
+        self.content_list[row][0].setCurrentIndex(Globals.tested_components_items.index(component))
+
+    def get_component(self, row: int):
+        return self.content_list[row][0].currentText()
+
+    def _set_task(self, row, text: str):
+        self.content_list[row][2].setText(text)
+
+    def get_task(self, row):
+        return self.content_list[row][2].text()
+
+    def _set_percentage(self, row, num: int):
+        self.content_list[row][5].setValue(num)
+
+    def get_percentage(self, row):
+        return self.content_list[row][5].value()
+
+    def _set_box_checks(self, row, checked_boxes: list):
+        for child in self.content_list[row][3].children():
+            if isinstance(child, QCheckBox) and child.text() in checked_boxes:
+                child.setChecked(True)
+
+    def get_box_checks(self, row):
+        checked_boxes = []
+        for child in self.content_list[row][3].children():
+            if isinstance(child, QCheckBox) and child.isChecked():
+                checked_boxes.append(child.text())
+        return checked_boxes
+
+    def _set_nic(self, row: int, nic: str):
+        self.content_list[row][4].setCurrentIndex(Globals.tested_nics_item.index(nic))
+
+    def get_nic(self, row: int):
+        return self.content_list[row][4].currentText()
+
+    def _set_comment(self, row, text):
+        self.content_list[row][6].setText(text)
+
+    def get_comment(self, row):
+        return self.content_list[row][6].text()
