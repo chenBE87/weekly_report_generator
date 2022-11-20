@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QCursor
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QGridLayout, QLineEdit, QSpinBox, QComboBox, QLabel, \
     QMenu, QLayoutItem
@@ -7,6 +7,10 @@ import Globals
 
 
 class Section(QWidget):
+
+    # signals
+    section_deleted = pyqtSignal(QWidget)
+
     num_of_columns = 3
 
     def __init__(self, section_name, description_type: Globals.DescriptionType = None, parent=None):
@@ -159,3 +163,4 @@ class Section(QWidget):
         self.lbl.setParent(None)
         self.lbl.deleteLater()
         self.deleteLater()
+        self.section_deleted.emit(self)

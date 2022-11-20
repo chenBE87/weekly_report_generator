@@ -7,15 +7,12 @@ import Globals
 class MessageBuilder:
 
     def __init__(self):
-        self.prefix_file_path = 'message_handler\\html_message_prefix.html'
         self.output_file = 'message_handler\\msg_builder_html.html'
         self.msg = ''
 
     def build_message(self, sections: list):
         self.msg = '<!DOCTYPE html><html><body lang=en-IL link=\"#0563C1\" vlink=\"#954F72\"' \
                    " style='word-wrap:break-word'><div>"
-        #with open(self.prefix_file_path, 'r') as f:
-        #    self.msg = f.read()
         self._add_title()
         for section in sections:
             if section.section_name == 'RedMine':
@@ -26,6 +23,8 @@ class MessageBuilder:
                 self._add_certification_section(section)
             elif section.section_name == 'QA Runs':
                 self._add_qa_runs_section(section)
+            elif section.section_name == 'Automation':
+                self._add_automation_line(section)
             else:
                 self._add_generic_section(section)
         self._add_message_suffix()
@@ -133,6 +132,25 @@ class MessageBuilder:
     def _add_dcpn_line(self, section):
         self._add_rm_section(section)
 
+    def _add_automation_line(self, section):
+        self._open_bullet()
+        self._add_bullet_line(1, section.section_name)
+        section_content = section.get_all_lines_info()
+        for idx in section_content:
+            self._open_bullet()
+            ticket = section_content[idx]['Ticket']
+            repo = section_content[idx]['Repo']
+            link = f'{section.link_prefix.replace("PLACEHOLDER", repo)}/{ticket}'
+            ticket_link_txt = self.create_href(link, ticket)
+            status = section_content[idx]['Status']
+            comment = section_content[idx]['Comment']
+            txt = f'{ticket_link_txt} - {status}'
+            if comment:
+                txt += f' ( {comment} )'
+            self._add_bullet_line(2, txt)
+            self._close_bullet()
+        self._close_bullet()
+
     def _add_title(self):
         html_title = "<p class=MsoNormal><b><span lang=EN-US style='font-size:22.0pt'>" \
                      f"Weekly Status ({self.get_today_date()})<o:p></o:p></span></b></p></br></br>"
@@ -162,9 +180,9 @@ class MessageBuilder:
     def get_percentage_color(percentage: int):
         if percentage == 0:
             return '0000B0'  # Blue
-        if 0 > percentage <= 50:
+        if 0 < percentage <= 50:
             return 'CB4335'  # Red
-        if 50 > percentage <= 80:
+        if 50 < percentage <= 80:
             return 'F5B041'  # Orange
         return '00B050'  # Green
 

@@ -47,7 +47,7 @@ class SectionCertification(Section):
         self.content_list.append([component, lbl, task_edit, boxes_frame, nics, status, comments_edit])
 
     def set_line(self, line_num: int, content_dict: dict):
-        while len(self.content_list) < line_num:
+        while len(self.content_list) <= line_num:
             self.add_content()
         self._set_component(line_num, content_dict['Component'])
         self._set_task(line_num, content_dict['Task'])

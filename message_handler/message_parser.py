@@ -31,6 +31,10 @@ class MessageParser:
                 section_info = self._parse_certification_section(section_bullets)
             elif section_name == 'QA Runs':
                 section_info = self._parse_qa_runs_section(section_bullets)
+            elif section_name == 'QA Runs':
+                section_info = self._parse_qa_runs_section(section_bullets)
+            elif section_name == 'Automation':
+                section_info = self._parse_automation_section(section_bullets)
             else:
                 section_info = None
             sections[section_name] = section_info
@@ -128,9 +132,35 @@ class MessageParser:
             info_dict['Comment'] = comment
             rm_section[idx] = info_dict
             idx += 1
-
-
         return rm_section
 
     def _parse_dcpn_section(self, section_bullets: list):
         return self._parse_redmine_section(section_bullets)
+
+    def _parse_automation_section(self, section_bullets: list):
+        rm_section = {}
+        idx = 1
+        for bullet in section_bullets:
+            info_dict = {}
+            txt = bullet.text
+            ticket = ''
+            repo = 'qa_auto_python_vmware'
+            status = ''
+            comment = ''
+            if ' - ' in txt or f' {chr(8211)} ' in txt:
+                minus_char = '-' if ' - ' in txt else chr(8211)
+                ticket, stat_and_comm = txt.split(f' {minus_char} ')
+                match = re.search(r'\(.*\)', stat_and_comm)
+                if match:
+                    comment = match.group(0).replace('(', '').replace(')', '').strip()
+                status = stat_and_comm.split(' (')[0].strip()
+            href = bullet.find('a')['href']
+            if href:
+                repo = href.split('/')[-3]
+            info_dict['Ticket'] = ticket
+            info_dict['Repo'] = repo
+            info_dict['Status'] = status
+            info_dict['Comment'] = comment
+            rm_section[idx] = info_dict
+            idx += 1
+        return rm_section
