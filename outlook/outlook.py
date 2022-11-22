@@ -1,3 +1,5 @@
+import datetime
+
 import win32com.client
 
 INBOX_FOLDER = 6
@@ -17,7 +19,18 @@ class Outlook:
         if messages:
             messages.Sort("[ReceivedTime]", Descending=True)
             return messages[0]
-        return None
+        return []
+
+    def get_last_mails(self, filter_subject: str, start_time: datetime.date):
+        filtered_messages = []
+        messages = self.sent_box.Items
+        messages = messages.Restrict(f"@SQL=(urn:schemas:httpmail:subject LIKE '%{filter_subject}%')")
+        if messages:
+            messages.Sort("[ReceivedTime]", Descending=True)
+            for message in messages:
+                if message.SentOn.date() >= start_time:
+                    filtered_messages.append(message)
+        return filtered_messages
 
     def send_html_mail(self, subject, html_text, to, cc):
         new_mail = self.outlook.CreateItem(0)

@@ -1,16 +1,18 @@
+import datetime
 import os
 import pickle
-import sys
-
-from PyQt6.QtCore import Qt, QRect
-from PyQt6.QtGui import QAction, QFont, QIcon
+from dateutil.relativedelta import relativedelta
+from PyQt6.QtCore import Qt, QRect, pyqtSlot
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QMainWindow, QSizePolicy, QFrame, QGridLayout, QSpacerItem, QLabel, QVBoxLayout, \
-    QPushButton, QDialog, QComboBox, QMessageBox
+    QPushButton, QDialog, QComboBox, QMessageBox, QWidget
 
 from gui.dialogs.add_section_dialog import AddSectionDialog, EXIST_SECTION_INDEX
 import Globals
+from gui.dialogs.select_time_dialog import SelectTimeDialog
 from gui.dialogs.send_mail_dialog import SendMailDialog
 from gui.section.section import Section
+from gui.section.section_automation import SectionAutomation
 from gui.section.section_certification import SectionCertification
 from gui.section.section_dcpn import SectionDcpn
 from gui.section.section_redmine import SectionRedmine
@@ -35,10 +37,7 @@ class MainWindow(QMainWindow):
         self.top_grid_layout = QGridLayout()
         self.top_frame.setLayout(self.top_grid_layout)
         #   Title
-        self.title = QLabel('Weekly Report Generator')
-        font = QFont()
-        font.setPointSize(20)
-        self.title.setFont(font)
+        self.title = QLabel('<h1>Weekly Report Generator</h1>')
         self.top_grid_layout.addWidget(self.title, 0, 1, 1, 2, Qt.AlignmentFlag.AlignLeft)
         #   Buttons
         #       Content Configuration
@@ -63,17 +62,21 @@ class MainWindow(QMainWindow):
         # Menu Bar
         self.file_menu = self.menuBar().addMenu('File')
         self.options_menu = self.menuBar().addMenu('Options')
-        self.view_mail = QAction('View as Mail')
+        self.get_reports = self.options_menu.addMenu('Get Reports From Mail')
+        self.view_mail = QAction('View Report as Mail')
         self.view_mail.triggered.connect(self.view_report)
-        self.action_send_mail = QAction('Send Mail')
+        self.action_send_mail = QAction('Send Report on Mail')
         self.action_send_mail.triggered.connect(self.send_mail)
-        self.action_get_last_report = QAction('Get Last Report')
+        self.action_get_last_report = QAction('Last Report')
+        self.get_reports_from_period = QAction('View Reports From Period')
         self.action_get_last_report.triggered.connect(self.get_last_report)
+        self.get_reports_from_period.triggered.connect(self.view_reports)
         self.save_file = QAction('Save')
         self.save_file.triggered.connect(self.save_content)
         self.load_file = QAction('Load')
         self.load_file.triggered.connect(self.load_content)
-        self.options_menu.addAction(self.action_get_last_report)
+        self.get_reports.addAction(self.action_get_last_report)
+        self.get_reports.addAction(self.get_reports_from_period)
         self.options_menu.addSeparator()
         self.options_menu.addAction(self.view_mail)
         self.options_menu.addAction(self.action_send_mail)
@@ -112,6 +115,28 @@ class MainWindow(QMainWindow):
         if self.sections:
             self.msg_builder.build_message(self.sections)
             self.msg_builder.view_msg_as_html()
+
+    def view_reports(self):
+
+        w = SelectTimeDialog()
+        if w.exec() == QDialog.DialogCode.Accepted:
+            str_num, date = w.choice.split(' ')
+            num = int(str_num)
+            if date == 'years':
+                min_time = datetime.date.today() - relativedelta(years=num)
+            elif date == 'months':
+                min_time = datetime.date.today() - relativedelta(months=num)
+            elif date == 'weeks':
+                min_time = datetime.date.today() - relativedelta(weeks=num)
+            elif date == 'days':
+                min_time = datetime.date.today() - relativedelta(days=num)
+            else:
+                QMessageBox.critical(self, 'Get Last Mails', f'invalid date {date}')
+                return
+            messages = self.outlook.get_last_mails(filter_subject='Weekly Status', start_time=min_time)
+            self.msg_builder.merge_messages(messages)
+            self.msg_builder.view_msg_as_html()
+
 
     def get_last_report(self):
         last_status = self.outlook.get_last_mail(filter_subject='Weekly Status')
@@ -152,6 +177,8 @@ class MainWindow(QMainWindow):
                 section = SectionCertification(section_name)
             elif section_name == 'QA Runs':
                 section = SectionCertification(section_name)
+            elif section_name == 'Automation':
+                section = SectionAutomation(section_name)
             else:
                 if isinstance(content_dict[section_name][1]['Status'], QComboBox):
                     status_type = Globals.DescriptionType.STATUS
@@ -160,6 +187,7 @@ class MainWindow(QMainWindow):
                 section = Section(section_name, status_type)
             for idx in content_dict[section_name]:
                 section.set_line(idx, content_dict[section_name][idx])
+            section.section_deleted.connect(self.remove_section_from_list)
             self.section_lay.addWidget(section)
             self.sections.append(section)
 
@@ -183,9 +211,16 @@ class MainWindow(QMainWindow):
                     section = SectionCertification(section_name)
                 elif section_name == 'QA Runs':
                     section = SectionCertification(section_name)
+                elif section_name == 'Automation':
+                    section = SectionAutomation(section_name)
             else:
                 section_name, status_desc = w.output_variables_list
                 section = Section(section_name, status_desc)
             if section:
+                section.section_deleted.connect(self.remove_section_from_list)
                 self.sections.append(section)
                 self.section_lay.addWidget(section)
+
+    @pyqtSlot(QWidget)
+    def remove_section_from_list(self, section):
+        self.sections.remove(section)

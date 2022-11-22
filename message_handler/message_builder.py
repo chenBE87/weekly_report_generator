@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import webbrowser
 import Globals
 
@@ -197,3 +198,14 @@ class MessageBuilder:
 
     def _add_message_suffix(self):
         self.msg += '</div></body></html>'
+
+    def merge_messages(self, messages):
+        msg = '<!DOCTYPE html><html><body lang=en-IL link=\"#0563C1\" vlink=\"#954F72\"' \
+                   " style='word-wrap:break-word'><div>"
+        for message in messages:
+            html_str: str = message.HTMLBody
+            html_str = re.search(r'<div.*</div>', html_str).group(0)
+            msg += html_str
+        msg += '</body></html>'
+        with open(self.output_file, 'w') as f:
+            f.write(msg)
