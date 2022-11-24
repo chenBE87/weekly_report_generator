@@ -7,8 +7,8 @@ import Globals
 
 class MessageBuilder:
 
-    def __init__(self):
-        self.output_file = 'message_handler\\msg_builder_html.html'
+    def __init__(self, saved_files_full_dir):
+        self.output_file = f'{saved_files_full_dir}\\saved_files\\msg_builder_html.html'
         self.msg = ''
 
     def build_message(self, sections: list):

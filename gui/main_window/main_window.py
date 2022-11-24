@@ -1,6 +1,7 @@
 import datetime
 import os
 import pickle
+
 from dateutil.relativedelta import relativedelta
 from PyQt6.QtCore import Qt, QRect, pyqtSlot
 from PyQt6.QtGui import QAction, QIcon
@@ -87,10 +88,9 @@ class MainWindow(QMainWindow):
         # Additional class variables
         self.report_info = {}
         self.outlook = Outlook()
-        self.msg_builder = MessageBuilder()
+        self.msg_builder = MessageBuilder(self.app_path)
         self.msg_parser = MessageParser()
         self.sections = []
-        # last_status = outlook.get_last_mail(filter_subject='Weekly Status')
 
     def send_mail(self):
         if self.sections:
@@ -136,7 +136,6 @@ class MainWindow(QMainWindow):
             messages = self.outlook.get_last_mails(filter_subject='Weekly Status', start_time=min_time)
             self.msg_builder.merge_messages(messages)
             self.msg_builder.view_msg_as_html()
-
 
     def get_last_report(self):
         last_status = self.outlook.get_last_mail(filter_subject='Weekly Status')
